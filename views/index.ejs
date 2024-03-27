@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>What's On?</title>
+
+    <link rel="stylesheet" href="styles/styles.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <!--For some reason, enabling flex wrap automatically reduces the size of elements within the flex box (e.g. image size and text input)-->
+  <header class="flex wrap col justify-centre align-centre g10">
+    <div class="logo-head">
+      <img
+        class="logo-head-img"
+        src="images/whats-on-full.png"
+        alt="what's on logo"
+      />
+    </div>
+    <h1>Find out what's on near you!</h1>
+
+    <search>
+      <form class="flex col justify-centre align-centre g20">
+        <div id="loc-input">
+          <img
+            id="loc-pin-svg"
+            src="images/location-pin.svg"
+            alt="location pin"
+          />
+          <input type="text" placeholder="Enter Location" />
+        </div>
+        <button
+          class="primaryCTA flex row justify-centre align-centre g20"
+          type="submit"
+        >
+          <img id="search-svg" src="images/search-icon.svg" alt="search icon" />
+          Search
+        </button>
+      </form>
+    </search>
+    <div class="divider-line"></div>
+  </header>
+  <body></body>
+</html>

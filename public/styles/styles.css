@@ -1,0 +1,153 @@
+/* Responsiveness Rules:
+    Mobile: =< 600px (min catered for is 360px)
+    Tablet: =< 992px
+    Desktop >= 993px
+*/
+
+/* Colour Palette:
+    Dark Grey (text): #404040;
+    Light Grey: #EBF2FA;
+    Orange (Primary Accent): #FF8C42;
+    Aqua? (Secondary Accent): 08A4BD;
+*/
+
+/* Fonts:
+    All Content - Inter, sans-serif
+*/
+
+header {
+  height: 80vh;
+}
+
+h1 {
+  font-family: "Inter", sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  color: #404040;
+  text-align: center;
+}
+
+.divider-line {
+  width: 535px;
+  border-bottom: 1px solid #404040;
+  margin-block: 30px;
+}
+
+/* ~~~~~~~~~~ FLEX ~~~~~~~~~~ */
+
+.flex {
+  display: flex;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.col {
+  flex-direction: column;
+}
+
+.row {
+  flex-direction: row;
+}
+
+.justify-centre {
+  justify-content: center;
+}
+
+.align-centre {
+  align-items: center;
+}
+
+.space-around {
+  justify-content: space-around;
+}
+
+.g20 {
+  gap: 20px;
+}
+
+.g10 {
+  gap: 10px;
+}
+
+.g05 {
+  gap: 5px;
+}
+
+/* ~~~~~~~~~~ IMAGES AND SVGS ~~~~~~~~~~ */
+
+.logo-head {
+  height: 162px;
+  width: 535px;
+  flex-shrink: 1;
+}
+
+.logo-head-img {
+  width: 100%;
+}
+
+#loc-pin-svg {
+  height: 44px;
+  width: 21px;
+  position: absolute;
+  top: 12px;
+  left: 22px;
+}
+
+#search-svg {
+  height: 48px;
+  width: 48px;
+}
+
+/* ~~~~~~~~~~ FORM INPUTS ~~~~~~~~~~ */
+
+#loc-input {
+  position: relative;
+}
+
+input[type="text"] {
+  height: 67px;
+  width: 485px;
+  background-color: #ebf2fa;
+
+  border: 1px solid #404040;
+  border-radius: 32px;
+
+  padding-inline-start: 64px;
+
+  font-family: "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: #404040;
+
+  box-shadow: 4px 4px 4px 0px #00000025;
+}
+
+/* ~~~~~~~~~~ BUTTONS ~~~~~~~~~~ */
+.primaryCTA {
+  height: 67px;
+  width: 245px;
+  background-color: #ff8c42;
+
+  border: none;
+  border-radius: 32px;
+
+  font-family: "Inter", sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: white;
+
+  box-shadow: 4px 4px 4px 0px #00000025;
+}
+
+.primaryCTA:hover {
+  background-color: #ff8c4275;
+  cursor: pointer;
+}
+
+.primaryCTA:active {
+  box-shadow: inset 0px 0px 16px 12px #ff8c42;
+}
+
+/* ~~~~~~~~~~ CARDS ~~~~~~~~~~ */
