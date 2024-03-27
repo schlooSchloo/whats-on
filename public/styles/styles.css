@@ -19,6 +19,10 @@ header {
   height: 80vh;
 }
 
+body {
+  margin-inline: 5%;
+}
+
 h1 {
   font-family: "Inter", sans-serif;
   font-size: 40px;
@@ -33,7 +37,11 @@ h1 {
   margin-block: 30px;
 }
 
-/* ~~~~~~~~~~ FLEX ~~~~~~~~~~ */
+.hide {
+  display: none;
+}
+
+/* ~~~~~~~~~~ FLEX AND GRID ~~~~~~~~~~ */
 
 .flex {
   display: flex;
@@ -63,6 +71,10 @@ h1 {
   justify-content: space-around;
 }
 
+.space-between {
+  justify-content: space-between;
+}
+
 .g20 {
   gap: 20px;
 }
@@ -73,6 +85,10 @@ h1 {
 
 .g05 {
   gap: 5px;
+}
+
+.grid {
+  display: grid;
 }
 
 /* ~~~~~~~~~~ IMAGES AND SVGS ~~~~~~~~~~ */
@@ -150,4 +166,123 @@ input[type="text"] {
   box-shadow: inset 0px 0px 16px 12px #ff8c42;
 }
 
+/* ~~~~~~~~~~ LOADER ~~~~~~~~~~ */
+#loader {
+  height: max-content;
+  width: 100%;
+  z-index: 1;
+  background: linear-gradient(110deg, #ffffff01, #ffffff 10%, #ffffff01 20%);
+  background-size: 200% 100%;
+  animation: gradientLoader 1s linear infinite reverse;
+}
+
+@keyframes gradientLoader {
+  0% {
+    background-position-x: 0%;
+  }
+  100% {
+    background-position-x: 200%;
+  }
+}
+
+.loader-text {
+  background-color: #ebf2fa;
+  border-radius: 8px;
+  margin-block: 7px;
+}
+
+.date-placeholder {
+  height: 39px;
+  width: 315px;
+}
+
+.icon-placeholder {
+  height: 40px;
+  width: 40px;
+  display: inline-block;
+}
+
+.temp-placeholder {
+  height: 39px;
+  width: 75px;
+  background-color: #ebf2fa;
+  display: inline-block;
+
+  border-radius: 8px;
+}
+
+#loader * {
+  position: relative;
+  z-index: -1;
+}
+
+.card.skeleton {
+  height: 420px;
+  /* 470px; 470 - padding (50) */
+  width: 322px;
+  /* 372px; */
+
+  border: 3px solid #ebf2fa;
+  border-radius: 32px;
+
+  padding: 25px;
+  /* padding-block: 5%;
+  padding-inline: 6.5%; */
+}
+
+.short-detail {
+  height: 16px;
+  width: 178px;
+}
+
+.long-detail {
+  height: 16px;
+  width: 287px;
+}
+
+.short-desc {
+  height: 16px;
+  width: 208px;
+}
+
+.long-desc {
+  height: 16px;
+  width: 324px;
+}
+
+.loader-button {
+  height: 45px;
+  width: 200px;
+  background-color: #ebf2fa;
+  border-radius: 16px;
+  margin-top: 15px;
+}
+
 /* ~~~~~~~~~~ CARDS ~~~~~~~~~~ */
+
+.response {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.cards {
+  margin-top: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 500px));
+  /* row-gap: 10px; */
+}
+
+.card.img {
+  height: 121px;
+  width: 324px;
+  border-radius: 32px 32px 0px 0px;
+  background-color: #ebf2fa;
+}
+
+.card-title {
+  height: 28px;
+  width: 324px;
+}
+
+.event-details {
+  align-self: baseline;
+}

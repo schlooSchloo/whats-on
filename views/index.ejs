@@ -45,7 +45,42 @@
         </button>
       </form>
     </search>
-    <div class="divider-line"></div>
+    <div class="divider-line hide"></div>
   </header>
-  <body></body>
+  <body>
+    <!--Loader while waiting for response from APIs-->
+    <section id="loader" class="response">
+      <div class="date skeleton flex wrap g20">
+        <div class="date-placeholder loader-text"></div>
+        <div class="weather-placeholder flex align-centre g10">
+          <img
+            class="icon-placeholder"
+            src="images/loader-weather-icon.svg"
+            alt="placeholder weather icon"
+          />
+          <div class="temp-placeholder loader-text"></div>
+        </div>
+      </div>
+      <div class="cards grid g20">
+        <% for (i=0; i < 3; i++) { %>
+        <div class="card skeleton flex col align-centre space-between">
+          <div class="card img loader-img"></div>
+          <div class="card-title loader-text"></div>
+          <div class="event-details">
+            <div class="short-detail loader-text"></div>
+            <div class="short-detail loader-text"></div>
+            <div class="long-detail loader-text"></div>
+          </div>
+          <div class="event-desc">
+            <div class="long-desc loader-text"></div>
+            <div class="long-desc loader-text"></div>
+            <div class="long-desc loader-text"></div>
+            <div class="short-desc loader-text"></div>
+          </div>
+          <div class="loader-button"></div>
+        </div>
+        <% } %>
+      </div>
+    </section>
+  </body>
 </html>
