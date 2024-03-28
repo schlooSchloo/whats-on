@@ -90,9 +90,11 @@ Due to rate limits set by API Service Providers, a rate limit has been set on th
 
 - Static index.ejs
 - CSS for static index.ejs
-- Search autocomplete
+- Loader animation
+- Card Template
+- Search autocomplete and validation
+- Render error if location doesn't exist
 - Dynamic index.ejs using dummy data
-- Loading animation
 - Location Geocoding
 - Get Weather, render weather icons from returned weather codes
 - Get events

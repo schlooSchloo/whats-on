@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>What's On?</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.svg" />
 
     <link rel="stylesheet" href="styles/styles.css" />
 
@@ -16,7 +17,7 @@
   </head>
 
   <!--For some reason, enabling flex wrap automatically reduces the size of elements within the flex box (e.g. image size and text input)-->
-  <header class="flex wrap col justify-centre align-centre g10">
+  <header id="header" class="flex wrap col justify-centre align-centre g10">
     <div class="logo-head">
       <img
         class="logo-head-img"
@@ -27,16 +28,17 @@
     <h1>Find out what's on near you!</h1>
 
     <search>
-      <form class="flex col justify-centre align-centre g20">
+      <form id="loc-search" class="flex col justify-centre align-centre g20">
         <div id="loc-input">
           <img
             id="loc-pin-svg"
             src="images/location-pin.svg"
             alt="location pin"
           />
-          <input type="text" placeholder="Enter Location" />
+          <input type="text" placeholder="Enter Location" required />
         </div>
         <button
+          id="search-btn"
           class="primaryCTA flex row justify-centre align-centre g20"
           type="submit"
         >
@@ -45,11 +47,11 @@
         </button>
       </form>
     </search>
-    <div class="divider-line hide"></div>
+    <div id="head-divider" class="divider-line hide"></div>
   </header>
   <body>
     <!--Loader while waiting for response from APIs-->
-    <section id="loader" class="response">
+    <section id="loader" class="response hide">
       <div class="date skeleton flex wrap g20">
         <div class="date-placeholder loader-text"></div>
         <div class="weather-placeholder flex align-centre g10">
@@ -82,5 +84,6 @@
         <% } %>
       </div>
     </section>
+    <script rel="text/javascript" src="js/index.js"></script>
   </body>
 </html>
