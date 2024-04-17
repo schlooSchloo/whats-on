@@ -35,7 +35,12 @@
             src="images/location-pin.svg"
             alt="location pin"
           />
-          <input type="text" placeholder="Enter Location" required />
+          <input
+            type="text"
+            name="location"
+            placeholder="Enter Location"
+            required
+          />
         </div>
         <button
           id="search-btn"
@@ -47,10 +52,13 @@
         </button>
       </form>
     </search>
+
     <div id="head-divider" class="divider-line hide"></div>
   </header>
+
   <body>
     <!--Loader while waiting for response from APIs-->
+
     <section id="loader" class="response hide">
       <div class="date skeleton flex wrap g20">
         <div class="date-placeholder loader-text"></div>
@@ -63,6 +71,7 @@
           <div class="temp-placeholder loader-text"></div>
         </div>
       </div>
+
       <div class="cards grid g20">
         <% for (i=0; i < 3; i++) { %>
         <div class="card skeleton flex col align-centre space-between">
@@ -79,10 +88,65 @@
             <div class="long-desc loader-text"></div>
             <div class="short-desc loader-text"></div>
           </div>
-          <div class="loader-button"></div>
+          <div class="loader-button button"></div>
         </div>
         <% } %>
       </div>
+    </section>
+
+    <!--Render Event Cards with content once response received-->
+
+    <section id="content" class="response">
+      <% for (a=0; a < 2; a++) { %>
+      <div class="date flex wrap g20">
+        <h2 class="event-date">SATURDAY, 01-JAN</h2>
+        <div class="weather flex align-centre g10">
+          <img
+            class="weather-icon"
+            src="images/weather-icons/png/10000_clear_small@2x.png"
+            alt="weather icon"
+          />
+          <h2 class="temp">32&degC</h2>
+        </div>
+      </div>
+      <div class="cards grid g20">
+        <% for (i=0; i < 3; i++) { %>
+        <a href="https://canberrawritersfestival.com.au/">
+          <div
+            class="card response flex col align-centre space-between"
+            style="--animation-order: <%- (a + 1) * (i + 1) %>"
+          >
+            <div class="card img">
+              <!--Couldn't get Gemini to provide real image URLs, could instead have 'category' images that are rendered based on what category Gemini gives the event (e.g. 'Sport')-->
+              <img src="images/placeholder-img.jpg" alt="event image" />
+            </div>
+            <h3>Canberra Writers Festival <%- (a+1) * (i+1) %></h3>
+            <div class="event-details grid col-g10">
+              <p data-variant="title">Time</p>
+              <p>5pm - 11pm</p>
+              <p data-variant="title">Price</p>
+              <p>Free</p>
+              <p data-variant="title">Location</p>
+              <p>Commonwealth Place, National Triangle</p>
+            </div>
+            <p class="event-desc">
+              The Canberra Writers Festival is a major literary event that
+              brings together some of the world's leading writers and thinkers
+              to discuss their work and ideas.
+            </p>
+
+            <button
+              class="learn-more button flex row justify-centre align-centre g10"
+              type="button"
+            >
+              <img src="images/external-link-icon.svg" alt="external link" />
+              <h3 data-variant="white">Learn More</h3>
+            </button>
+          </div>
+        </a>
+        <% } %>
+      </div>
+      <% } %>
     </section>
     <script rel="text/javascript" src="js/index.js"></script>
   </body>
