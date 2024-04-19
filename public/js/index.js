@@ -59,8 +59,11 @@ function formatDate(dates) {
 
 //// Return weather for required dates
 // async function searchWeather(dates) {
+//Change to instead send json object with dates
+// data = {date_range: dates }
 //   const response = await fetch(`/search-weather=${dates}`, {
 //     method: "POST",
+//   body: JSON.stringify(data);
 //   });
 //   /* Need to finish this */
 

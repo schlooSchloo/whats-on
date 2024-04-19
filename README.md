@@ -99,3 +99,4 @@ Due to rate limits set by API Service Providers, a rate limit has been set on th
 - Get Weather, render weather icons from returned weather codes
 - Get events
 - Figure what to do about card images
+- Raise bug with tomorrow.io - 5 day forecast returns weatherCode with length of 4, but weather icons require code with length of 5
