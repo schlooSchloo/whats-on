@@ -2,12 +2,10 @@ import express from "express";
 import axios from "axios";
 // import bodyParser from "body-parser";
 import "dotenv/config";
-// for dummy data - delete when using APIs
 import * as fs from "node:fs/promises";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// End stuff for dummy data
+import path from "path";
 
 const app = express();
 const port = 3000;
@@ -74,7 +72,8 @@ async function getWeather(latlong) {
 }
 
 //// Extract Temperature Forecast and Weather Code from tomorrow.io response, for required dates
-function parseWeather(userDates, forecast) {
+
+function parseWeather(userDates, forecast, filePathList) {
   let weather = {};
   weather.daily = [];
 
@@ -90,18 +89,41 @@ function parseWeather(userDates, forecast) {
     //// Compare userDates against dates in response from tomorrow.io to get respective 'temp' and 'weather code'
     for (let i = 0; i < forecastDates.length; i++) {
       if (stringUserDate == forecastDates[i].time.slice(0, 10)) {
-        // add funtion that finds weather code's respective weather-icon name to add to the JSON object
+        const weatherIconPath = getWeatherIcon(
+          forecastDates[i].values.weatherCodeMax,
+          filePathList
+        ); // get file path for weather icon
+
         const dateMatch = {
           date: stringUserDate,
           temperatureMax_degC:
             forecastDates[i].values.temperatureMax.toFixed(1), //round to 1dp
           weather_code: forecastDates[i].values.weatherCodeMax.toString(),
+          weather_icon_path: weatherIconPath,
         };
         weather.daily.push(dateMatch);
       }
     }
   });
+
   return weather;
+}
+
+function getWeatherIcon(weatherCode, filePathList) {
+  try {
+    let iconPath = "";
+    const weatherCodeDay = weatherCode * 10;
+
+    filePathList.forEach((path) => {
+      if (path.slice(0, 5) == weatherCodeDay && path.slice(-7) == "@2x.png") {
+        iconPath = path;
+      }
+    });
+
+    return iconPath;
+  } catch (err) {
+    console.log(err.name, err.message);
+  }
 }
 
 //// MIDDLEWARE
@@ -131,22 +153,31 @@ app.post("/search-events", (req, res) => {
 
 app.post("/search-weather", async (req, res) => {
   try {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
     const userLocationName = req.body.locationName;
     const userDates = [
       new Date(req.body.date_range[0]),
       new Date(req.body.date_range[1]),
     ];
 
+    const weatherIconPathList = await fs.readdir(
+      path.join(__dirname, "/public/images/weather-icons/png")
+    );
+
     //// Geocode Location input by user
-    const latlong = "-35.2975906, 149.1012676"; // fake return from API request for testing
-    // const latLong = await getLatLong(userLocationName);
+    // const latlong = "-35.2975906, 149.1012676"; // fake return from API request for testing
+    const latLong = await getLatLong(userLocationName);
 
     //// Get 5-day weather forecast from tomorrow.io
-    const weatherResponse = await readWeather(); // fake API request (reads dummy data). Change to 'getweather()' (Below) when ready to link it all up
-    // const weatherResponse = await getweather(latlong); // For live
+    // const weatherResponse = await readWeather(); // fake API request (reads dummy data). Change to 'getweather()' (Below) when ready to link it all up
+    const weatherResponse = await getWeather(latLong); // For live
 
     //// Compare user's dates to weatherResponse dates to find the respective forecasts
-    const weather = parseWeather(userDates, weatherResponse);
+    const weather = parseWeather(
+      userDates,
+      weatherResponse,
+      weatherIconPathList
+    );
 
     res.status(200).send(weather);
   } catch (err) {
