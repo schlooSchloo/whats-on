@@ -1,6 +1,6 @@
 import express from "express";
 import axios from "axios";
-import bodyParser from "body-parser";
+// import bodyParser from "body-parser";
 import "dotenv/config";
 // for dummy data - delete when using APIs
 import * as fs from "node:fs/promises";
@@ -32,15 +32,34 @@ async function readWeather() {
   }
 }
 
-//// Get weather forecast from tomorrow.io API
-async function getWeather() {
+//// Get Longitude and Latitude of Location entered by user
+async function getLatLong(locationName) {
   try {
-    console.log(req.query.location); //// NEED TO GET GEOCODE FIRST THEN CALL THIS FUNCTION WITH THE GEOCODE
+    const apiResponse = await axios.get(
+      process.env.LOCATION_IQ_SEARCH_API_URL,
+      {
+        params: {
+          key: process.env.LOCATION_IQ_API_KEY,
+          q: locationName,
+          format: "json",
+        },
+      }
+    );
+
+    return `${apiResponse.data[0].lat}, ${apiResponse.data[0].lon}`;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+//// Get weather forecast from tomorrow.io API
+async function getWeather(latlong) {
+  try {
     const apiResponse = await axios.get(
       process.env.TOMORROW_IO_FORECAST_API_URL,
       {
         params: {
-          location: req.query.location,
+          location: latlong,
           timesteps: "1d",
           units: "metric",
           apikey: process.env.TOMORROW_IO_API_KEY,
@@ -48,10 +67,9 @@ async function getWeather() {
       }
     );
 
-    res.status(200).send(JSON.stringify(apiResponse.data));
+    return apiResponse.data;
   } catch (err) {
     console.log(err);
-    res.status(404).send(err.message);
   }
 }
 
@@ -89,8 +107,10 @@ function parseWeather(userDates, forecast) {
 //// MIDDLEWARE
 app.use(express.static("public"));
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+
+// app.use(bodyParser.json()); //// I don't think I need bodyParser anymore. test without
+// app.use(bodyParser.urlencoded({ extended: true }));
 
 //// ROUTES
 app.get("/", (req, res) => {
@@ -111,13 +131,19 @@ app.post("/search-events", (req, res) => {
 
 app.post("/search-weather", async (req, res) => {
   try {
+    const userLocationName = req.body.locationName;
     const userDates = [
       new Date(req.body.date_range[0]),
       new Date(req.body.date_range[1]),
     ];
 
+    //// Geocode Location input by user
+    const latlong = "-35.2975906, 149.1012676"; // fake return from API request for testing
+    // const latLong = await getLatLong(userLocationName);
+
     //// Get 5-day weather forecast from tomorrow.io
-    const weatherResponse = await readWeather(); // fake API request (reads dummy data)
+    const weatherResponse = await readWeather(); // fake API request (reads dummy data). Change to 'getweather()' (Below) when ready to link it all up
+    // const weatherResponse = await getweather(latlong); // For live
 
     //// Compare user's dates to weatherResponse dates to find the respective forecasts
     const weather = parseWeather(userDates, weatherResponse);
