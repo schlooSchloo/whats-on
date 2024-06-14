@@ -197,6 +197,7 @@ function parseEvents(userDates, eventResponse) {
 
     // Get array of events returned in eventResponse
     /*
+    // Use this block for Live
     const eventListText = eventResponse.candidates[0].content.parts[0].text;
     // console.log(eventListText);
     const eventList = JSON.parse(
@@ -254,11 +255,52 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-app.get("/autocomplete"),
-  (req, res) => {
-    // Get location suggestions
-    // Going to run autocomplete via server to protect API keys. May result in latency though :'( )
-  };
+app.get("/autocomplete", async (req, res) => {
+  // Get location suggestions
+  // Going to run autocomplete via server to protect API keys. May result in latency though :'(
+  // If live on a domain, would use http referrer restriction
+  try {
+    const locSearch = req.query.q;
+    console.log(locSearch);
+
+    const apiResponse = await axios.get(
+      process.env.LOCATION_IQ_AUTOCOMPLETE_API_URL,
+      {
+        params: {
+          key: process.env.LOCATION_IQ_API_KEY,
+          q: locSearch,
+          limit: 3,
+          // normalizecity: 1,
+        },
+      }
+    );
+
+    // Only return basic contextual information regarding location
+    let locList = [];
+
+    apiResponse.data.forEach((location) => {
+      if (location.address.state) {
+        locList.push(
+          `${location.address.name}, ${location.address.state}, ${location.address.country}`
+        );
+      } else {
+        locList.push(`${location.address.name}, ${location.address.country}`);
+      }
+    });
+
+    res.status(200).send(locList);
+    //
+  } catch (err) {
+    console.log(err);
+
+    if (err.name == "AxiosError") {
+      const errMsg = `${err.name}: ${err.message}\n${err.response.statusText} - ${err.response.data.error}`;
+      res.status(err.response.status).send(errMsg);
+    } else {
+      res.status(500).send(err);
+    }
+  }
+});
 
 app.post("/search-events", async (req, res) => {
   // Get event list
