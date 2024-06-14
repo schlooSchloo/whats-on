@@ -12,24 +12,51 @@ const port = 3000;
 
 app.set("view engine", "ejs");
 
-// Example Data
-const eventResponse = {
-  text: '``` JSON\n{\n  "events": [\n    {\n      "date": "2023-03-04",\n      "title": "Canberra Symphony Orchestra: The Planets",\n      "description": "The Canberra Symphony Orchestra presents a concert featuring Gustav Holst\'s epic orchestral suite, The Planets.",\n      "price": "$69-$129",\n      "link": "https://www.cso.org.au/concerts/the-planets"\n    },\n    {\n      "date": "2023-03-05",\n      "title": "Canberra Writers Festival",\n      "description": "The Canberra Writers Festival is a celebration of literature and ideas, featuring a program of author talks, workshops, and events.",\n      "price": "Varies",\n      "link": "https://canberrawritersfestival.com.au/"\n    },\n    {\n      "date": "2023-03-05",\n      "title": "Floriade: Commonwealth Park",\n      "description": "Floriade is an annual flower festival showcasing over a million blooms in Commonwealth Park.",\n      "price": "Free",\n      "link": "https://www.floriade.com.au/"\n    },\n    {\n      "date": "2023-03-05",\n      "title": "Canberra Raiders vs. Wests Tigers",\n      "description": "The Canberra Raiders take on the Wests Tigers in a NRL match at GIO Stadium.",\n      "price": "$29-$99",\n      "link": "https://www.raiders.com.au/tickets"\n    },\n    {\n      "date": "2023-03-05",\n      "title": "National Folk Festival",\n      "description": "The National Folk Festival is a four-day celebration of folk music, dance, and culture, featuring a program of concerts, workshops, and events.",\n      "price": "$180-$280",\n      "link": "https://www.folkfestival.org.au/"\n    }\n  ]\n}\n```',
-}; // Maybe read from files instead on API call? Then can update to be axios api call later.
-
 //// FUNCTIONS
-// Read dummy data for use in Weather API. Delete once using real API call
-async function readWeather() {
+
+//// ~~~ FOR DEV - READ IN DUMMY DATA TO AVOID SPAMMING API ENDPOINTS ~~~ ////
+
+// Return dummy data for Latitude and Longitude of Canberra, Australia
+async function getLatLong(locationName) {
+  return "-35.2975906, 149.1012676";
+}
+
+// Read dummy data for use in /search-weather route
+async function getWeather(latlong) {
   try {
     const res = await fs.readFile(
       __dirname + "/dummy-data/dummy-weather-response.json"
     );
+
     return JSON.parse(res);
+    //
   } catch (err) {
     console.log(err);
   }
 }
 
+// Read dummy data for use in /search-events route
+// Note: Need to change const eventList in function parseWeather() to:
+// const eventList = JSON.parse(
+//   // Get array of events returned in eventResponse
+//   JSON.parse(eventResponse).candidates[0].content.parts[0].text.replace(
+//     /(```json|```|\n)/gi,
+//     ""
+//   )).events
+async function getEvents(locationName) {
+  const eventResponse = await fs.readFile(
+    path.join(
+      dirname(fileURLToPath(import.meta.url)),
+      "/dummy-data/dummy-event-response.json"
+    )
+  );
+
+  return eventResponse;
+}
+
+//// ~~~ END DUMMY FUNCTIONS ~~~ ////
+
+/*
 //// Get Longitude and Latitude of Location entered by user
 async function getLatLong(locationName) {
   try {
@@ -70,6 +97,40 @@ async function getWeather(latlong) {
     console.log(err);
   }
 }
+  
+
+//// Get list of events from Gemini API
+async function getEvents(locationName) {
+  try {
+    const prompt = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `What events are on in or within 20km of ${locationName} this Saturday and Sunday? Include date in yyyy-mm-dd format, event name, a short description of the event, the price (or range of prices) of the event, and a link to the event website. Provide 3 events for each day. Provide response in JSON format with events ordered by date ascending`,
+            },
+          ],
+        },
+      ],
+    };
+
+    const eventResponse = await axios.post(
+      process.env.GEMINI_GENERATE_CONTENT_API_URL,
+      prompt,
+      {
+        params: {
+          key: process.env.GEMINI_API_KEY,
+        },
+      }
+    );
+
+    return eventResponse.data;
+    //
+  } catch (err) {
+    console.log(err);
+  }
+}
+  */
 
 //// Extract Temperature Forecast and Weather Code from tomorrow.io response, for required dates
 
@@ -77,16 +138,17 @@ function parseWeather(userDates, forecast, filePathList) {
   let weather = {};
   weather.daily = [];
 
-  //// Convert userDates to 10char string in format YYYY-MM-DD
   const forecastDates = forecast.timelines.daily;
 
+  //// Convert userDates to 10char string in format YYYY-MM-DD
   userDates.forEach((date) => {
     const stringUserDate = `${date.getFullYear()}-${(
       "0" +
       (date.getMonth() + 1)
     ).slice(-2)}-${("0" + date.getDate()).slice(-2)}`;
 
-    //// Compare userDates against dates in response from tomorrow.io to get respective 'temp' and 'weather code'
+    //// Compare userDates against dates in response from tomorrow.io to get respective 'temp'
+    //// and 'weather code'
     for (let i = 0; i < forecastDates.length; i++) {
       if (stringUserDate == forecastDates[i].time.slice(0, 10)) {
         const weatherIconPath = getWeatherIcon(
@@ -109,10 +171,12 @@ function parseWeather(userDates, forecast, filePathList) {
   return weather;
 }
 
+//// Return the file path for the correct weather icon
 function getWeatherIcon(weatherCode, filePathList) {
   try {
     let iconPath = "";
     const weatherCodeDay = weatherCode * 10;
+    // Day icon has 0 appended at end of weatherCode (1 for night)
 
     filePathList.forEach((path) => {
       if (path.slice(0, 5) == weatherCodeDay && path.slice(-7) == "@2x.png") {
@@ -121,8 +185,62 @@ function getWeatherIcon(weatherCode, filePathList) {
     });
 
     return iconPath;
+    //
   } catch (err) {
     console.log(err.name, err.message);
+  }
+}
+
+function parseEvents(userDates, eventResponse) {
+  try {
+    // console.log(eventResponse);
+
+    // Get array of events returned in eventResponse
+    /*
+    const eventListText = eventResponse.candidates[0].content.parts[0].text;
+    // console.log(eventListText);
+    const eventList = JSON.parse(
+      eventListText.replace(/(```json|```|\n)/gi, "")
+    ).events;
+    */
+
+    // NOTE (FOR DEV WORK): When using Dummy getweather() use:
+    const eventList = JSON.parse(
+      // Get array of events returned in eventResponse
+      JSON.parse(eventResponse).candidates[0].content.parts[0].text.replace(
+        /(```json|```|\n)/gi,
+        ""
+      )
+    ).events;
+
+    // Because Gemini Model returns old dates, re-map returned dates to user dates
+    const satDate = eventList[0].date;
+    const sunDate = eventList[eventList.length - 1].date;
+
+    eventList.forEach((event) => {
+      switch (event.date) {
+        case satDate:
+          event.date = `${userDates[0].getFullYear()}-${(
+            "0" +
+            (userDates[0].getMonth() + 1)
+          ).slice(-2)}-${("0" + userDates[0].getDate()).slice(-2)}`;
+          break;
+        case sunDate:
+          event.date = `${userDates[1].getFullYear()}-${(
+            "0" +
+            (userDates[1].getMonth() + 1)
+          ).slice(-2)}-${("0" + userDates[1].getDate()).slice(-2)}`;
+          break;
+        default:
+          event.date = "";
+          break;
+      }
+    });
+
+    return eventList;
+    //
+  } catch (err) {
+    console.log(err);
   }
 }
 
@@ -131,27 +249,39 @@ app.use(express.static("public"));
 
 app.use(express.json());
 
-// app.use(bodyParser.json()); //// I don't think I need bodyParser anymore. test without
-// app.use(bodyParser.urlencoded({ extended: true }));
-
 //// ROUTES
 app.get("/", (req, res) => {
   res.render("index");
 });
 
-app.post("/autocomplete"),
+app.get("/autocomplete"),
   (req, res) => {
+    // Get location suggestions
     // Going to run autocomplete via server to protect API keys. May result in latency though :'( )
   };
 
-app.post("/search-events", (req, res) => {
-  // Route only reached through JS fetch request on Search button click (or refresh of page with query params in URL)
-  // Open dummy data files for weather and event
-  // Clean Content
-  // Send data back to client side for JS to render
+app.post("/search-events", async (req, res) => {
+  // Get event list
+  try {
+    const userLocationName = req.body.locationName;
+    const userDates = [
+      new Date(req.body.date_range[0]),
+      new Date(req.body.date_range[1]),
+    ];
+
+    const eventResponse = await getEvents(userLocationName);
+
+    const eventList = parseEvents(userDates, eventResponse);
+
+    res.status(200).send(eventList);
+    //
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 app.post("/search-weather", async (req, res) => {
+  // Get weather
   try {
     const __dirname = dirname(fileURLToPath(import.meta.url));
     const userLocationName = req.body.locationName;
@@ -164,15 +294,13 @@ app.post("/search-weather", async (req, res) => {
       path.join(__dirname, "/public/images/weather-icons/png")
     );
 
-    //// Geocode Location input by user
-    // const latlong = "-35.2975906, 149.1012676"; // fake return from API request for testing
+    // Geocode Location input by user
     const latLong = await getLatLong(userLocationName);
 
-    //// Get 5-day weather forecast from tomorrow.io
-    // const weatherResponse = await readWeather(); // fake API request (reads dummy data). Change to 'getweather()' (Below) when ready to link it all up
-    const weatherResponse = await getWeather(latLong); // For live
+    // Get 5-day weather forecast from tomorrow.io
+    const weatherResponse = await getWeather(latLong);
 
-    //// Compare user's dates to weatherResponse dates to find the respective forecasts
+    // Compare user's dates to weatherResponse dates to find the respective forecasts
     const weather = parseWeather(
       userDates,
       weatherResponse,
@@ -180,21 +308,14 @@ app.post("/search-weather", async (req, res) => {
     );
 
     res.status(200).send(weather);
+    //
   } catch (err) {
     console.log(err);
   }
-
-  // Route only reached through JS fetch request on Search button click (or refresh of page with query params in URL)
-  // Open dummy data files for weather
-  // Clean Content
-  // Search weather icon file names for one that contains the weather code
-  // Send data back to client side for JS to render
 });
 
 app.listen(port, () => {
   console.log(`Listening on Port: ${port}`);
 });
-
-//// Yis, yissss, I know I could have used the Google Generative AI NPM Module, but I wanted to learn how to make HTTP requests with axios :'D
 
 //// Errors encounted: GEMINI | 503 - The model is overloaded, please try again later
