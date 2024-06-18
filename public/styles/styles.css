@@ -27,7 +27,8 @@ header {
 
 .make-space {
   min-height: 550px;
-  height: 35vh;
+  height: 40vh;
+  /* max-height: fit-content; */
   /* animation: makeSpace 5s; */
 }
 
@@ -184,6 +185,40 @@ a {
   position: relative;
 }
 
+#loc-suggest {
+  /* position: relative; */
+  /* top: -20px; */
+
+  font-family: "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: #404040;
+}
+
+#loc-suggest ul {
+  border: 1px solid black;
+  border-top-style: none;
+  border-radius: 0px 0px 10px 10px;
+  box-shadow: 4px 4px 4px 0px #00000025;
+  background-color: #ebf2fa50;
+
+  margin-block: 0px;
+  padding-block: 8px;
+  padding-inline: 0px;
+
+  list-style-type: none;
+  text-align: center;
+}
+
+#loc-suggest ul li {
+  padding-block: 8px;
+}
+
+#loc-suggest ul li:hover {
+  font-weight: 600;
+  background: #ebf2fa;
+}
+
 input[type="text"] {
   height: 67px;
   width: 485px;
@@ -200,6 +235,10 @@ input[type="text"] {
   color: #404040;
 
   box-shadow: 4px 4px 4px 0px #00000025;
+}
+
+input[type="text"]:focus {
+  border-radius: 32px 32px 0px 0px;
 }
 
 /* ~~~~~~~~~~ BUTTONS ~~~~~~~~~~ */

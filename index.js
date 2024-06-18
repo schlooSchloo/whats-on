@@ -263,6 +263,7 @@ app.get("/autocomplete", async (req, res) => {
     const locSearch = req.query.q;
     console.log(locSearch);
 
+    /*
     const apiResponse = await axios.get(
       process.env.LOCATION_IQ_AUTOCOMPLETE_API_URL,
       {
@@ -274,21 +275,37 @@ app.get("/autocomplete", async (req, res) => {
         },
       }
     );
+    */
 
-    // Only return basic contextual information regarding location
-    let locList = [];
-
+    // Only return basic contextual information regarding location as an array
+    let response = [];
+    /*
     apiResponse.data.forEach((location) => {
       if (location.address.state) {
-        locList.push(
+        response.push(
           `${location.address.name}, ${location.address.state}, ${location.address.country}`
         );
       } else {
-        locList.push(`${location.address.name}, ${location.address.country}`);
+        response.push(`${location.address.name}, ${location.address.country}`);
       }
     });
+    */
 
-    res.status(200).send(locList);
+    // const response = {
+    //   locList: [
+    //     "Canberra, Australian Capital Territory, Australia",
+    //     "Canby, Minnesota, United States of America",
+    //     "Canberra Airport, Australian Capital Territory, Australia",
+    //   ],
+    // };
+
+    response = [
+      "Canberra, Australian Capital Territory, Australia",
+      "Canby, Minnesota, United States of America",
+      "Canberra Airport, Australian Capital Territory, Australia",
+    ];
+
+    res.status(200).send(JSON.stringify(response));
     //
   } catch (err) {
     console.log(err);
