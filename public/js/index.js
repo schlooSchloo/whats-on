@@ -1,20 +1,34 @@
 // Should add a 'Showing Results for...' ?
 
+async function fetchLocations() {
+  //// Fetch locations suggestions from /autocomplete route
+  const response = await fetch(`/autocomplete?q=${locInput.value}`, {
+    method: "GET",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Bad Network Response: ${response.status} - ${response.statusText}`
+    );
+  }
+  console.log(response);
+  const responseData = await response.json();
+  return responseData;
+}
+
 function suggestLocations(suggestion) {
   //// Render autocomplete location suggestions
-  const dropdown = document.getElementById("loc-suggest");
-  removeDropdown(dropdown);
+  
+  
+  
+  
   let listHTML = "";
   suggestion.forEach((location) => {
     listHTML += `<li>${location}</li>`;
   });
   dropdown.innerHTML = `<ul>${listHTML}</ul>`;
-
+  
   const listItems = document.querySelectorAll("li");
-  console.log(listItems);
-
   listItems.forEach((item) => {
-    console.log(item);
     item.addEventListener("click", function (event) {
       locInput.value = this.innerHTML;
       removeDropdown(dropdown);
@@ -125,52 +139,59 @@ const headDivider = document.getElementById("head-divider");
 const loader = document.getElementById("loader");
 const locSearch = document.getElementById("loc-search");
 const locInput = document.forms["loc-search"]["location"];
+const dropdown = document.getElementById("loc-suggest");
 const content = document.getElementById("content");
+
 
 locInput.addEventListener("keyup", async (event) => {
   try {
     //// Query LocationIQ /autocomplete endpoint for location suggestions based on user input
     console.log(locInput.value);
+    
     if (
       locInput.value != "" &&
       (event.code == `Key${event.key.toUpperCase()}` ||
         event.code == "Backspace")
     ) {
-      const response = await fetch(`/autocomplete?q=${locInput.value}`, {
-        method: "GET",
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Bad Network Response: ${response.status} - ${response.statusText}`
-        );
-      }
-      console.log(response);
-      const responseData = await response.json();
+      const responseData = await fetchLocations();
       suggestLocations(responseData);
+    } if (locInput.value == "") {
+      removeDropdown(dropdown);
     }
   } catch (err) {
     console.log(err);
   }
-  // Create event listener on search box that listens for keyboard events and sends contents of search box to server /autocomplete route
-  // fetch list of results from server and display as dropdown for users
-  // User can then click on result in dropdown and it will populate the search box
-  // On clicking on a result or out of the box, the dropdown disappears
 
   // Note: Still need to do:
   // * CSS (including highlight on hover) - DONE
   // https://www.algolia.com/blog/engineering/how-to-implement-autocomplete-with-javascript-on-your-website/
-  // * JS for populating Search box on click and removing search box
-  // * JS for removing dropdown if no text in search box or if user clicks out of search box
-  // * JS for making dropdown appear if user clicked out of search box and then back in again
-  // * JS if user presses backspace, resend query to server
+  // * JS for populating Search box on click and removing search box - DONE
+  // * JS for removing dropdown if no text in search box or if user clicks out of search box - DONE
+  // * JS for making dropdown appear if user clicked out of search box and then back in again - DONE
+  // * JS if user presses backspace, resend query to server - DONE
   // * What to do if user clicks search without selecting from dropdown?
 });
+
+document.addEventListener("click", () => {
+  if (document.activeElement != "input") {
+    removeDropdown(dropdown);
+  }
+})
+
+locInput.addEventListener("click", async () => {
+  //// Render dropdown when user clicks on input field (and text is present)
+  if (locInput.value != "") {
+    const responseData = await fetchLocations();
+    suggestLocations(responseData);
+  }
+})
 
 document.getElementById("search-btn").addEventListener("click", (search) => {
   //// Render loader and transition header to top of page on click of Search button
   console.log(`Searching... ${locInput.value}`);
   //// Check that a location has been input. If not, do nothing (form will prompt user to add an input)
   if (locInput.value != "") {
+      // or if it doesn't match what's in the suggestion list?
     search.preventDefault();
     // Make space for results and render loader
     head.classList.add("make-space");
