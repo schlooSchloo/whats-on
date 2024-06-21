@@ -167,7 +167,6 @@ function parseWeather(userDates, forecast, filePathList) {
       }
     }
   });
-
   return weather;
 }
 
@@ -322,7 +321,7 @@ app.get("/autocomplete", async (req, res) => {
 app.post("/search-events", async (req, res) => {
   // Get event list
   try {
-    const userLocationName = req.body.locationName;
+    const userLocationName = req.body.location_name;
     const userDates = [
       new Date(req.body.date_range[0]),
       new Date(req.body.date_range[1]),
@@ -339,10 +338,10 @@ app.post("/search-events", async (req, res) => {
   }
 });
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 app.post("/search-weather", async (req, res) => {
   // Get weather
   try {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
     const userLocationName = req.body.locationName;
     const userDates = [
       new Date(req.body.date_range[0]),
@@ -366,10 +365,11 @@ app.post("/search-weather", async (req, res) => {
       weatherIconPathList
     );
 
-    res.status(200).send(weather);
+    res.status(200).send(JSON.stringify(weather));
     //
   } catch (err) {
     console.log(err);
+    res.status(500);
   }
 });
 

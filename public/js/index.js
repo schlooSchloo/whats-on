@@ -1,4 +1,4 @@
-// Should add a 'Showing Results for...' ?
+//// FUNCTIONS
 
 async function fetchLocations() {
   //// Fetch locations suggestions from /autocomplete route
@@ -17,16 +17,13 @@ async function fetchLocations() {
 
 function suggestLocations(suggestion) {
   //// Render autocomplete location suggestions
-  
-  
-  
-  
+
   let listHTML = "";
   suggestion.forEach((location) => {
     listHTML += `<li>${location}</li>`;
   });
   dropdown.innerHTML = `<ul>${listHTML}</ul>`;
-  
+
   const listItems = document.querySelectorAll("li");
   listItems.forEach((item) => {
     item.addEventListener("click", function (event) {
@@ -89,28 +86,57 @@ function formatDate(dates) {
   ];
 }
 
-//// Return events on for provided location
-// async function searchEvents(location) {
-//   const response = await fetch(`/search-events?location=${location}`, {
-//     method: "POST",
-//   });
-//   /* Need to finish this */
+async function fetchWeather(data) {
+  try {
+    const weatherResponse = await fetch("/search-weather", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-//   return response;
-// }
+    if (!weatherResponse.ok) {
+      throw new Error(
+        `Bad Network Response: ${weatherResponse.status} - ${weatherResponse.statusText}`
+      );
+    }
 
-//// Return weather for required dates
-// async function searchWeather(dates) {
-//Change to instead send json object with dates
-// data = {date_range: dates }
-//   const response = await fetch(`/search-weather=${dates}`, {
-//     method: "POST",
-//   body: JSON.stringify(data);
-//   });
-//   /* Need to finish this */
+    const weather = await weatherResponse.json();
 
-//   return response;
-// }
+    return weather;
+    //
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function fetchEvents(data) {
+  try {
+    const eventsResponse = await fetch("/search-events", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!eventsResponse.ok) {
+      throw new Error(
+        `Bad Network Response: ${eventsResponse.status} - ${eventsResponse.statusText}`
+      );
+    }
+
+    const eventsList = await eventsResponse.json();
+
+    return eventsList;
+    //
+  } catch (err) {
+    console.log(err);
+  }
+}
 
 function renderEvents(formattedDates) {
   console.log(`renderEvents called with dates ${formattedDates} `);
@@ -134,6 +160,7 @@ function renderEvents(formattedDates) {
   });
 }
 
+//// GLOBAL DECLARATIONS
 const head = document.getElementById("header");
 const headDivider = document.getElementById("head-divider");
 const loader = document.getElementById("loader");
@@ -141,42 +168,37 @@ const locSearch = document.getElementById("loc-search");
 const locInput = document.forms["loc-search"]["location"];
 const dropdown = document.getElementById("loc-suggest");
 const content = document.getElementById("content");
+let suggestedLoc = [];
 
-
+//// EVENT LISTENERS
 locInput.addEventListener("keyup", async (event) => {
   try {
     //// Query LocationIQ /autocomplete endpoint for location suggestions based on user input
     console.log(locInput.value);
-    
+
     if (
       locInput.value != "" &&
       (event.code == `Key${event.key.toUpperCase()}` ||
         event.code == "Backspace")
     ) {
-      const responseData = await fetchLocations();
-      suggestLocations(responseData);
-    } if (locInput.value == "") {
+      suggestedLoc = await fetchLocations();
+      suggestLocations(suggestedLoc);
+    }
+    if (locInput.value == "") {
       removeDropdown(dropdown);
     }
+    //
   } catch (err) {
     console.log(err);
   }
-
-  // Note: Still need to do:
-  // * CSS (including highlight on hover) - DONE
-  // https://www.algolia.com/blog/engineering/how-to-implement-autocomplete-with-javascript-on-your-website/
-  // * JS for populating Search box on click and removing search box - DONE
-  // * JS for removing dropdown if no text in search box or if user clicks out of search box - DONE
-  // * JS for making dropdown appear if user clicked out of search box and then back in again - DONE
-  // * JS if user presses backspace, resend query to server - DONE
-  // * What to do if user clicks search without selecting from dropdown?
 });
 
 document.addEventListener("click", () => {
   if (document.activeElement != "input") {
     removeDropdown(dropdown);
   }
-})
+  //
+});
 
 locInput.addEventListener("click", async () => {
   //// Render dropdown when user clicks on input field (and text is present)
@@ -184,33 +206,57 @@ locInput.addEventListener("click", async () => {
     const responseData = await fetchLocations();
     suggestLocations(responseData);
   }
-})
+  //
+});
 
-document.getElementById("search-btn").addEventListener("click", (search) => {
-  //// Render loader and transition header to top of page on click of Search button
-  console.log(`Searching... ${locInput.value}`);
-  //// Check that a location has been input. If not, do nothing (form will prompt user to add an input)
-  if (locInput.value != "") {
-      // or if it doesn't match what's in the suggestion list?
-    search.preventDefault();
-    // Make space for results and render loader
-    head.classList.add("make-space");
-    headDivider.classList.remove("hide");
-    loader.classList.remove("hide");
-    locSearch.classList.remove("col");
+document
+  .getElementById("search-btn")
+  .addEventListener("click", async (search) => {
+    //// Render loader and transition header to top of page on click of Search button
+    try {
+      //// Check that a valid location has been input.
+      if (locInput.value != "" && suggestedLoc.includes(locInput.value)) {
+        search.preventDefault();
 
-    // Delete any previously rendered cards from a previous search
-    content.innerHTML = "";
+        // Make space for results and render loader
+        head.classList.add("make-space");
+        headDivider.classList.remove("hide");
+        loader.classList.remove("hide");
+        locSearch.classList.remove("col");
 
-    const dates = getDate();
-    console.log(dates);
-    const formattedDates = formatDate(dates);
-    console.log(formattedDates);
+        // Delete any previously rendered cards from a previous search
+        content.innerHTML = "";
 
-    // renderEvents(formattedDates);
-  }
+        // Get dates for the upcoming weekend
+        const dates = getDate();
+        console.log(dates);
+        const formattedDates = formatDate(dates);
+        console.log(formattedDates);
 
-  /* 
+        // Fetch weather and event data from APIs
+        const data = {
+          date_range: dates,
+          location_name: locInput.value,
+        };
+
+        const weather = await fetchWeather(data);
+        console.log(`Weather: ${JSON.stringify(weather)}`);
+
+        const eventList = await fetchEvents(data);
+        console.log(`Events: ${JSON.stringify(eventList)}`);
+
+        // Render data
+        // renderEvents(formattedDates);
+        //
+      } else {
+        search.preventDefault();
+        // Maybe add something to tell the user to select from the dropdown
+      }
+      //
+    } catch (err) {
+      console.log(err);
+    }
+    /* 
   * IF (there's text in the input field and it's a valid location) {
       * Delete all cards in #content section (e.g. if user searches another location)
       * Render loader and shift search bar up to top of page
@@ -221,4 +267,4 @@ document.getElementById("search-btn").addEventListener("click", (search) => {
       * Prompt user to add a location
     }
 */
-});
+  });
