@@ -1,21 +1,30 @@
 import express from "express";
 import axios from "axios";
-// import bodyParser from "body-parser";
 import "dotenv/config";
 import * as fs from "node:fs/promises";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import path from "path";
+import { rateLimit } from "express-rate-limit";
 
 const app = express();
 const port = 3000;
+
+const autocompleteRateLimit = rateLimit({
+  // Limiting autocomplete to 2 requests / sec
+  windowMs: 1000, // 1 sec
+  limit: 2,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "You've exceeded your rate limit!",
+});
 
 app.set("view engine", "ejs");
 
 //// FUNCTIONS
 
-//// ~~~ FOR DEV - READ IN DUMMY DATA TO AVOID SPAMMING API ENDPOINTS ~~~ ////
-
+//// ~~~ FOR DEVELOPMENT - READ IN DUMMY DATA TO AVOID SPAMMING API ENDPOINTS ~~~ ////
+/*
 // Return dummy data for Latitude and Longitude of Canberra, Australia
 async function getLatLong(locationName) {
   return "-35.2975906, 149.1012676";
@@ -53,12 +62,11 @@ async function getEvents(locationName) {
 
   return eventResponse;
 }
-
+*/
 //// ~~~ END DUMMY FUNCTIONS ~~~ ////
 
-/*
-//// Get Longitude and Latitude of Location entered by user
 async function getLatLong(locationName) {
+  //// Get Longitude and Latitude of Location entered by user
   try {
     const apiResponse = await axios.get(
       process.env.LOCATION_IQ_SEARCH_API_URL,
@@ -72,13 +80,18 @@ async function getLatLong(locationName) {
     );
 
     return `${apiResponse.data[0].lat}, ${apiResponse.data[0].lon}`;
+    //
   } catch (err) {
-    console.log(err);
+    // console.log(err);
+    if (err.name == "AxiosError") {
+      const errMsg = `${err.name}: ${err.message}\n${err.response.statusText} - ${err.response.data.error}`;
+      console.log(errMsg);
+    }
   }
 }
 
-//// Get weather forecast from tomorrow.io API
 async function getWeather(latlong) {
+  //// Get weather forecast from tomorrow.io API
   try {
     const apiResponse = await axios.get(
       process.env.TOMORROW_IO_FORECAST_API_URL,
@@ -93,21 +106,25 @@ async function getWeather(latlong) {
     );
 
     return apiResponse.data;
+    //
   } catch (err) {
-    console.log(err);
+    // console.log(err);
+    if (err.name == "AxiosError") {
+      const errMsg = `${err.name}: ${err.message}\n${err.response.statusText} - ${err.response.data.error}`;
+      console.log(errMsg);
+    }
   }
 }
-  
 
-//// Get list of events from Gemini API
 async function getEvents(locationName) {
+  //// Get list of events from Gemini API
   try {
     const prompt = {
       contents: [
         {
           parts: [
             {
-              text: `What events are on in or within 20km of ${locationName} this Saturday and Sunday? Include date in yyyy-mm-dd format, event name, a short description of the event, the price (or range of prices) of the event, and a link to the event website. Provide 3 events for each day. Provide response in JSON format with events ordered by date ascending`,
+              text: `What events are on in or within 20km of ${locationName} this Saturday and Sunday? Include date in yyyy-mm-dd format as 'date', event name as 'name', time of event (in am/pm format) as 'time', event location as 'location', a short description of the event as 'description, the price (or range of prices) of the event as 'price', and a link to the event website as 'link'. Provide 3 events for each day. Provide response in JSON format with events ordered by date ascending`,
             },
           ],
         },
@@ -130,31 +147,29 @@ async function getEvents(locationName) {
     console.log(err);
   }
 }
-  */
-
-//// Extract Temperature Forecast and Weather Code from tomorrow.io response, for required dates
 
 function parseWeather(userDates, forecast, filePathList) {
+  //// Extract Temperature Forecast and Weather Code from tomorrow.io response, for required dates
   let weather = {};
   weather.daily = [];
 
   const forecastDates = forecast.timelines.daily;
 
-  //// Convert userDates to 10char string in format YYYY-MM-DD
+  // Convert userDates to 10char string in format YYYY-MM-DD
   userDates.forEach((date) => {
     const stringUserDate = `${date.getFullYear()}-${(
       "0" +
       (date.getMonth() + 1)
     ).slice(-2)}-${("0" + date.getDate()).slice(-2)}`;
 
-    //// Compare userDates against dates in response from tomorrow.io to get respective 'temp'
-    //// and 'weather code'
+    // Compare userDates against dates in response from tomorrow.io to get respective 'temp'
+    // and 'weather code'
     for (let i = 0; i < forecastDates.length; i++) {
       if (stringUserDate == forecastDates[i].time.slice(0, 10)) {
         const weatherIconPath = getWeatherIcon(
           forecastDates[i].values.weatherCodeMax,
           filePathList
-        ); // get file path for weather icon
+        );
 
         const dateMatch = {
           date: stringUserDate,
@@ -170,8 +185,8 @@ function parseWeather(userDates, forecast, filePathList) {
   return weather;
 }
 
-//// Return the file path for the correct weather icon
 function getWeatherIcon(weatherCode, filePathList) {
+  //// Return the file path for the correct weather icon
   try {
     let iconPath = "";
     const weatherCodeDay = weatherCode * 10;
@@ -195,16 +210,15 @@ function parseEvents(userDates, eventResponse) {
     // console.log(eventResponse);
 
     // Get array of events returned in eventResponse
-    /*
-    // Use this block for Live
+
     const eventListText = eventResponse.candidates[0].content.parts[0].text;
     // console.log(eventListText);
     const eventList = JSON.parse(
-      eventListText.replace(/(```json|```|\n)/gi, "")
+      eventListText.replace(/(```json|```JSON|JSON|json|```|\n)/gi, "")
     ).events;
-    */
 
     // NOTE (FOR DEV WORK): When using Dummy getweather() use:
+    /*
     const eventList = JSON.parse(
       // Get array of events returned in eventResponse
       JSON.parse(eventResponse).candidates[0].content.parts[0].text.replace(
@@ -212,6 +226,7 @@ function parseEvents(userDates, eventResponse) {
         ""
       )
     ).events;
+    */
 
     // Because Gemini Model returns old dates, re-map returned dates to user dates
     const satDate = eventList[0].date;
@@ -254,7 +269,7 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-app.get("/autocomplete", async (req, res) => {
+app.get("/autocomplete", autocompleteRateLimit, async (req, res) => {
   // Get location suggestions
   // Going to run autocomplete via server to protect API keys. May result in latency though :'(
   // If live on a domain, would use http referrer restriction
@@ -262,7 +277,6 @@ app.get("/autocomplete", async (req, res) => {
     const locSearch = req.query.q;
     console.log(locSearch);
 
-    /*
     const apiResponse = await axios.get(
       process.env.LOCATION_IQ_AUTOCOMPLETE_API_URL,
       {
@@ -274,11 +288,10 @@ app.get("/autocomplete", async (req, res) => {
         },
       }
     );
-    */
 
     // Only return basic contextual information regarding location as an array
     let response = [];
-    /*
+
     apiResponse.data.forEach((location) => {
       if (location.address.state) {
         response.push(
@@ -288,21 +301,14 @@ app.get("/autocomplete", async (req, res) => {
         response.push(`${location.address.name}, ${location.address.country}`);
       }
     });
-    */
 
-    // const response = {
-    //   locList: [
-    //     "Canberra, Australian Capital Territory, Australia",
-    //     "Canby, Minnesota, United States of America",
-    //     "Canberra Airport, Australian Capital Territory, Australia",
-    //   ],
-    // };
-
+    /*
     response = [
       "Canberra, Australian Capital Territory, Australia",
       "Canby, Minnesota, United States of America",
       "Canberra Airport, Australian Capital Territory, Australia",
     ];
+    */
 
     res.status(200).send(JSON.stringify(response));
     //
@@ -338,11 +344,11 @@ app.post("/search-events", async (req, res) => {
   }
 });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 app.post("/search-weather", async (req, res) => {
   // Get weather
   try {
-    const userLocationName = req.body.locationName;
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const userLocationName = req.body.location_name;
     const userDates = [
       new Date(req.body.date_range[0]),
       new Date(req.body.date_range[1]),
@@ -354,6 +360,8 @@ app.post("/search-weather", async (req, res) => {
 
     // Geocode Location input by user
     const latLong = await getLatLong(userLocationName);
+    console.log(`Location Received: ${userLocationName}`);
+    console.log(`Location Coordinates Received: ${latLong}`);
 
     // Get 5-day weather forecast from tomorrow.io
     const weatherResponse = await getWeather(latLong);
@@ -369,7 +377,6 @@ app.post("/search-weather", async (req, res) => {
     //
   } catch (err) {
     console.log(err);
-    res.status(500);
   }
 });
 

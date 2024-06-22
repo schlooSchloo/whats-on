@@ -76,17 +76,33 @@ function formatDate(dates) {
     "DEC",
   ];
 
-  return [
-    `${days[dates[0].getDay()]}, ${dates[0].getDate()}-${
-      months[dates[0].getMonth()]
-    }`,
-    `${days[dates[1].getDay()]}, ${dates[1].getDate()}-${
-      months[dates[1].getMonth()]
-    }`,
+  const formattedDates = [
+    {
+      date: `${dates[0].getFullYear()}-${(
+        "0" +
+        (dates[0].getMonth() + 1)
+      ).slice(-2)}-${("0" + dates[0].getDate()).slice(-2)}`,
+      formatted: `${days[dates[0].getDay()]}, ${dates[0].getDate()}-${
+        months[dates[0].getMonth()]
+      }`,
+    },
+    {
+      date: `${dates[1].getFullYear()}-${(
+        "0" +
+        (dates[1].getMonth() + 1)
+      ).slice(-2)}-${("0" + dates[1].getDate()).slice(-2)}`,
+      formatted: `${days[dates[1].getDay()]}, ${dates[1].getDate()}-${
+        months[dates[1].getMonth()]
+      }`,
+    },
   ];
+
+  return formattedDates;
+  //
 }
 
 async function fetchWeather(data) {
+  //// Fetch forecast weather for selected dates
   try {
     const weatherResponse = await fetch("/search-weather", {
       method: "POST",
@@ -113,6 +129,7 @@ async function fetchWeather(data) {
 }
 
 async function fetchEvents(data) {
+  //// Fetch upcoming events for selected dates
   try {
     const eventsResponse = await fetch("/search-events", {
       method: "POST",
@@ -138,25 +155,77 @@ async function fetchEvents(data) {
   }
 }
 
-function renderEvents(formattedDates) {
+function renderEvents(formattedDates, weather, eventList) {
   console.log(`renderEvents called with dates ${formattedDates} `);
-  formattedDates.forEach((date) => {
+  let i = 0;
+  formattedDates.forEach((userDate) => {
     const eventDate = document.createElement("div");
-    eventDate.innerHTML = `
-      <div class="date flex wrap g20">
-        <h2 class="event-date">${date}</h2>
-        <div class="weather flex align-centre g10">
-          <img
-            class="weather-icon"
-            src="images/weather-icons/png/10000_clear_small@2x.png"
-            alt="weather icon"
-          />
-          <h2 class="temp">32&degC</h2>
+    weather.daily.forEach((forecast) => {
+      if (userDate.date == forecast.date) {
+        eventDate.innerHTML = `
+        <div class="date flex wrap g20">
+          <h2 class="event-date">${userDate.formatted}</h2>
+          <div class="weather flex align-centre g10">
+            <img
+              class="weather-icon"
+              src="images/weather-icons/png/${forecast.weather_icon_path}"
+              alt="weather icon"
+            />
+            <h2 class="temp">${forecast.temperatureMax_degC}&degC</h2>
+          </div>
         </div>
-      </div>`;
-    content.appendChild(eventDate);
-    // Then do a forEach on Events, matching on eventDates.getDay() (Because the events data is from last year and a different month)
-    // and append to child
+        <div id=cards${i} class="cards grid g20">
+        </div>
+        `;
+        content.appendChild(eventDate);
+
+        let a = 0; // Using 'a' and 'i' to set animation order
+        const eventCard = document.getElementById(`cards${i}`);
+
+        eventList.forEach((event) => {
+          if (userDate.date == event.date) {
+            eventCard.innerHTML += `
+              <a href=${event.link} target="_blank">
+                <div
+                  class="card response flex col align-centre space-between"
+                  style="--animation-order: ${(a + 1) * (i + 1)}"
+                >
+                  <div class="card img">
+                    <!--Couldn't get Gemini to provide real image URLs, could instead have 'category' images that are rendered based on what category Gemini gives the event (e.g. 'Sport')-->
+                    <img src="images/placeholder-img.jpg" alt="event image" />
+                  </div>
+                  <h3> ${event.name} </h3>
+                  <div class="event-details grid col-g10">
+                    <p data-variant="title">Time</p>
+                    <p>${event.time}</p>
+                    <p data-variant="title">Price</p>
+                    <p>${event.price}</p>
+                    <p data-variant="title">Location</p>
+                    <p>${event.location}</p>
+                  </div>
+                  <p class="event-desc">
+                    ${event.description}
+                  </p>
+
+                  <button
+                    class="learn-more button flex row justify-centre align-centre g10"
+                    type="button"
+                  >
+                    <img src="images/external-link-icon.svg" alt="external link" />
+                    <h3 data-variant="white">Learn More</h3>
+                  </button>
+                </div>
+              </a>            
+            `;
+
+            a++;
+          }
+        });
+
+        content.appendChild(eventCard);
+        i++;
+      }
+    });
   });
 }
 
@@ -194,6 +263,7 @@ locInput.addEventListener("keyup", async (event) => {
 });
 
 document.addEventListener("click", () => {
+  //// Remove dropdown when user clicks out of the Search box
   if (document.activeElement != "input") {
     removeDropdown(dropdown);
   }
@@ -214,9 +284,12 @@ document
   .addEventListener("click", async (search) => {
     //// Render loader and transition header to top of page on click of Search button
     try {
-      //// Check that a valid location has been input.
+      // Check that a valid location has been input.
       if (locInput.value != "" && suggestedLoc.includes(locInput.value)) {
         search.preventDefault();
+
+        // Delete any previously rendered cards from a previous search
+        content.innerHTML = "";
 
         // Make space for results and render loader
         head.classList.add("make-space");
@@ -224,21 +297,16 @@ document
         loader.classList.remove("hide");
         locSearch.classList.remove("col");
 
-        // Delete any previously rendered cards from a previous search
-        content.innerHTML = "";
-
         // Get dates for the upcoming weekend
         const dates = getDate();
-        console.log(dates);
         const formattedDates = formatDate(dates);
-        console.log(formattedDates);
 
         // Fetch weather and event data from APIs
         const data = {
           date_range: dates,
           location_name: locInput.value,
         };
-
+        console.log(`Sending data: ${data.location_name}`);
         const weather = await fetchWeather(data);
         console.log(`Weather: ${JSON.stringify(weather)}`);
 
@@ -246,7 +314,10 @@ document
         console.log(`Events: ${JSON.stringify(eventList)}`);
 
         // Render data
-        // renderEvents(formattedDates);
+        renderEvents(formattedDates, weather, eventList);
+
+        loader.classList.add("hide");
+        content.classList.remove("hide");
         //
       } else {
         search.preventDefault();
@@ -256,15 +327,4 @@ document
     } catch (err) {
       console.log(err);
     }
-    /* 
-  * IF (there's text in the input field and it's a valid location) {
-      * Delete all cards in #content section (e.g. if user searches another location)
-      * Render loader and shift search bar up to top of page
-      * Get dates for this weekend
-      * Send POST fetch request to "/search" route with location and dates
-      * Wait for response
-    } ELSE {
-      * Prompt user to add a location
-    }
-*/
   });

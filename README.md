@@ -48,7 +48,11 @@ Remember, this key will only give you access to a Development Instance of Gemini
 
 What's **ON** requires Node.js to run.
 
-**TO UPDATE - Add API Keys as Environment Variables**
+## Add Your Keys to .env
+
+Rename '.env.example' to '.env' and your keys to the file.
+
+## Install Dependencies and Run!
 
 Install the dependencies and start the server
 
@@ -74,30 +78,10 @@ Due to some delay in response on some API calls, a loading screen is rendered wh
 
 ### Rate Limiting
 
-Due to rate limits set by API Service Providers, a rate limit has been set on this website of:
-
-- 2 requests / sec
-- 25 requests / hour
-- 500 requests / day
+I've only added a rate limiter to the /autocomplete route (of 2 requests / s) which fetches location suggestions from LocationIQ based on User Input
 
 # What the Future Could Look Like 🤖
 
 - Additional Search Options (Dates, Interests, Price)
 - Save and Share Events
 - Recommend events based on interests, or that are similar to one attended
-
-# PoC To-Do
-
-- Static index.ejs
-- CSS for static index.ejs
-- Loader animation
-- Card Template
-- Search autocomplete and validation
-- Render error if location doesn't exist
-- Dynamic index.ejs using dummy data
-- Location Geocoding
-- Get Weather, render weather icons from returned weather codes
-- Get events
-- Figure what to do about card images
-- Rate throttling
-- Raise bug with tomorrow.io - 5 day forecast returns weatherCode with length of 4, but weather icons require code with length of 5
