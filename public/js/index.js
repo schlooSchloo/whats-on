@@ -160,11 +160,13 @@ function renderEvents(formattedDates, weather, eventList) {
   let i = 0;
   formattedDates.forEach((userDate) => {
     const eventDate = document.createElement("div");
-    weather.daily.forEach((forecast) => {
-      if (userDate.date == forecast.date) {
-        eventDate.innerHTML = `
+    eventDate.innerHTML = `
         <div class="date flex wrap g20">
           <h2 class="event-date">${userDate.formatted}</h2>
+          `;
+    weather.daily.forEach((forecast) => {
+      if (userDate.date == forecast.date) {
+        eventDate.innerHTML += `
           <div class="weather flex align-centre g10">
             <img
               class="weather-icon"
@@ -174,17 +176,22 @@ function renderEvents(formattedDates, weather, eventList) {
             <h2 class="temp">${forecast.temperatureMax_degC}&degC</h2>
           </div>
         </div>
+        `;
+      }
+    });
+
+    eventDate.innerHTML += `
         <div id=cards${i} class="cards grid g20">
         </div>
         `;
-        content.appendChild(eventDate);
+    content.appendChild(eventDate);
 
-        let a = 0; // Using 'a' and 'i' to set animation order
-        const eventCard = document.getElementById(`cards${i}`);
+    let a = 0; // Using 'a' and 'i' to set animation order
+    const eventCard = document.getElementById(`cards${i}`);
 
-        eventList.forEach((event) => {
-          if (userDate.date == event.date) {
-            eventCard.innerHTML += `
+    eventList.forEach((event) => {
+      if (userDate.date == event.date) {
+        eventCard.innerHTML += `
               <a href=${event.link} target="_blank">
                 <div
                   class="card response flex col align-centre space-between"
@@ -218,14 +225,12 @@ function renderEvents(formattedDates, weather, eventList) {
               </a>            
             `;
 
-            a++;
-          }
-        });
+        a++;
 
         content.appendChild(eventCard);
-        i++;
       }
     });
+    i++;
   });
 }
 
